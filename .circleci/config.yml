@@ -14,9 +14,13 @@ jobs:
         - Circle-CI-Support
     steps:
       - run:
+          name: "refresh"
+          command: |
+            sudo apt-get update ; wait ;
+      - run:
           name: "install dependencies"
           command: |
-            sudo apt-get -y install libnss3-dev libtool clang
+            sudo apt-get -y install libnss3-dev libtool clang ; wait ;
       - run:
           name: "build dependencies"
           command: |
