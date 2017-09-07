@@ -8,6 +8,10 @@ jobs:
           CI: cicleci
           POSTGRES_DB: circle_test
           CC: clang
+    branches:
+      only:
+        - master
+        - Circle-CI-Support
     steps:
       - run:
           name: "install dependencies"
