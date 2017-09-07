@@ -1,0 +1,55 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/pkcs11
+    docker:
+      - image: circleci/ubuntu-server:latest
+        environment:
+          CI: cicleci
+          POSTGRES_DB: circle_test
+          CC: clang
+    steps:
+      - run:
+          name: "install dependencies"
+          command: |
+            sudo apt-get -y install libnss3-dev libtool clang
+      - run:
+          name: "build dependencies"
+          command: |
+            sudo apt-get -y source --compile ubuntu-toolchain-r-test
+      - checkout
+      - run:
+          name: "fetch and pull"
+          command: |
+            git fetch && git pull --all || true
+      - run:
+          shell: /bin/bash
+          name: "test environment"
+          command: |
+            $CC --version
+      - run:
+          shell: /bin/bash
+          name: "auto reconfigure"
+          command: |
+            autoreconf -i
+      - run:
+          shell: /bin/bash
+          name: "configure"
+          command: |
+            ./configure
+      - run:
+          shell: /bin/bash
+          name: "Prep for test"
+          command: |
+            make V=1
+      - run:
+          shell: /bin/bash
+          name: "Tests"
+          command: |
+            make test
+      - run:
+          shell: /bin/bash
+          name: "clean up when done"
+          command: |
+            make test-clean
+destination: build
