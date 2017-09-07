@@ -24,7 +24,7 @@ jobs:
       - run:
           name: "build dependencies"
           command: |
-            sudo apt-get -y source --compile ubuntu-toolchain-r-test
+            sudo apt-get -y --compile source ubuntu-toolchain-r-test || true
       - checkout
       - run:
           name: "fetch and pull"
