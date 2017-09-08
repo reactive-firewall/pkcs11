@@ -47,14 +47,9 @@ jobs:
             ./configure
       - run:
           shell: /bin/bash
-          name: "Prep for test"
-          command: |
-            make V=1
-      - run:
-          shell: /bin/bash
           name: "Tests"
           command: |
-            make test
+            make V=1 && make test
       - run:
           shell: /bin/bash
           name: "clean up when done"
