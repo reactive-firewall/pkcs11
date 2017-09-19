@@ -32,27 +32,7 @@ jobs:
             git fetch && git pull --all || true
       - run:
           shell: /bin/bash
-          name: "test environment"
-          command: |
-            $CC --version
-      - run:
-          shell: /bin/bash
-          name: "auto reconfigure"
-          command: |
-            autoreconf -i
-      - run:
-          shell: /bin/bash
-          name: "configure"
-          command: |
-            ./configure
-      - run:
-          shell: /bin/bash
           name: "Tests"
           command: |
-            make V=1 && make test
-      - run:
-          shell: /bin/bash
-          name: "clean up when done"
-          command: |
-            make test-clean
+            .circleci/run_ci.sh
 destination: build
