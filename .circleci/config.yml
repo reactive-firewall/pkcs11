@@ -28,7 +28,7 @@ jobs:
       - run:
           name: "install dependencies"
           command: |
-            sudo apt-get -y install build-essential libssl-dev openssl libengine-pkcs11-openssl libnss3 libnss3-tools libnss3-dev libtool clang autotools-dev automake make autoconf git openssh-client ; wait ;
+            sudo apt-get -y install build-essential libssl-dev openssl libengine-pkcs11-openssl libnss3 libnss3-tools libnss3-dev libtool clang autotools-dev automake make autoconf git openssh-client pkg-config ; wait ;
       - checkout
       - run:
           name: "fetch and pull"
