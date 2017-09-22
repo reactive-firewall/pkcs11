@@ -47,11 +47,6 @@ matrix:
       - MATRIX_EVAL="brew install gcc6 && CC=gcc-6 && CXX=g++-6"
     osx_image: xcode8
   - os: osx
-    compiler: gcc-7
-    env:
-      - MATRIX_EVAL="brew install gcc7 && CC=gcc-7 && CXX=g++-7"
-    osx_image: xcode8.3
-  - os: osx
     compiler: clang
     osx_image: xcode9
 
