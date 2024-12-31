@@ -12,6 +12,10 @@
 
 /*---------------------------- Defines -------------------------------------*/
 #define ASCIILINESZ         (1024)
+/*
+  Math: ASCIILINESZ * 2 = 2048 --> + len(":") = +1 == 2049 (without the string terminator)
+ */
+#define BUFFER_SIZE         ((ASCIILINESZ * 2) + 1)
 #define INI_INVALID_KEY     ((char*)-1)
 
 /*---------------------------------------------------------------------------
@@ -648,9 +652,10 @@ dictionary * iniparser_load(const char * ininame)
     char line    [ASCIILINESZ+1] ;
     char section [ASCIILINESZ+1] ;
     char key     [ASCIILINESZ+1] ;
-    char tmp     [(ASCIILINESZ * 2) + 1] ;
+    char tmp     [BUFFER_SIZE+1] ;
     char val     [ASCIILINESZ+1] ;
 
+    int  trunk ; /* would have overflowed */
     int  last=0 ;
     int  len ;
     int  lineno=0 ;
@@ -717,7 +722,8 @@ dictionary * iniparser_load(const char * ininame)
             break ;
 
             case LINE_VALUE:
-            sprintf(tmp, "%s:%s", section, key);
+            trunk = snprintf(tmp, BUFFER_SIZE, "%s:%s", section, key);
+/* TODO: Add error handling to work with errs var */
             errs = dictionary_set(dict, tmp, val) ;
             break ;
 

@@ -160,12 +160,22 @@ static ECDSA_SIG *pkcs11_ecdsa_sign(const unsigned char *dgst, int dgst_len,
              * ECDSA_SIG for OpenSSL.
              */
             nlen = tlen / 2;
+#if (OPENSSL_VERSION_NUMBER & 0xF0000000) >= 0x30000000
+            ECDSA_SIG_get0(rval, &r, &s);
+            /*
+             * should be the same as:
+             * r = ECDSA_SIG_get0_r(rval);
+             * s = ECDSA_SIG_get0_s(rval);
+             * EXCEPT the caller needs to free the rval ? TODO: check for leak from this change
+             */
+#else
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
             ECDSA_SIG_get0(&r, &s, rval);
 #else
             r = rval->r;
             s = rval->s;
 #endif
+#endif /* end openssl v3 patch */
             BN_bin2bn(&buf[0], nlen, r);
             BN_bin2bn(&buf[nlen], nlen, s);
         }

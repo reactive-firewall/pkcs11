@@ -251,6 +251,8 @@ CK_RV DLL_EXPORTED C_GetFunctionList(CK_FUNCTION_LIST_PTR_PTR ppFunctionList)
     return rv;
 }
 
+
+/* C_Initialize calls are broken see mbrossard/pkcs11#4 */
 CK_RV DLL_EXPORTED C_Initialize(CK_VOID_PTR pInitArgs)
 {
     CK_RV rv = CKR_OK;

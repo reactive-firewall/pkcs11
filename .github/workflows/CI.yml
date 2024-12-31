@@ -1,0 +1,123 @@
+#  .github/workflows/CI.yml
+---
+name: CI
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches: ["main", "master", "CI-CD-refactor-2024"]
+  pull_request:
+    branches: ["main", "master"]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-13, macos-14-arm64, macos-14, macos-latest]
+        compiler: [clang, gcc-10, gcc-11, gcc-12, gcc-13, gcc-14]
+        include:
+          - os: ubuntu-latest
+            compiler: clang
+          - os: ubuntu-latest
+            compiler: gcc-10
+          - os: ubuntu-latest
+            compiler: gcc-11
+          - os: ubuntu-latest
+            compiler: gcc-12
+          - os: macos-14
+            compiler: clang
+          - os: macos-14-arm64
+            compiler: clang
+          - os: macos-14
+            compiler: gcc-13
+          - os: macos-14-arm64
+            compiler: gcc-13
+          - os: macos-13
+            compiler: clang
+          - os: macos-13
+            compiler: gcc-12
+          - os: macos-latest
+            compiler: gcc-14
+          - os: macos-latest
+            compiler: clang
+        exclude:
+          - os: ubuntu-latest
+            compiler: gcc-13
+          - os: ubuntu-latest
+            compiler: gcc-14
+
+    steps:
+      - name: Set up environment
+        if: ${{ !cancelled() && startsWith(matrix.os, 'macos-') }}
+        shell: bash
+        run: |
+          if [[ -x $(command -v brew) ]] ; then
+            eval $(brew shellenv 2>/dev/null) || true
+          fi
+          HOMEBREW_PREFIX=$(brew --prefix 2>/dev/null || : ;) ;  # intentional line noise
+          HOMEBREW_CELLAR=$(brew --cellar 2>/dev/null || : ;) ;  # intentional line noise
+          printf "%s\n" "HOMEBREW_PREFIX=${HOMEBREW_PREFIX}" >> $GITHUB_ENV
+          printf "%s\n" "HOMEBREW_CELLAR=${HOMEBREW_CELLAR}" >> $GITHUB_ENV
+          brew update
+          brew upgrade
+          brew install autoconf automake openssl
+          # Extract the compiler version into a shell variable
+          compiler="${{ matrix.compiler }}"
+          version="${compiler##*-}"  # Extract the version number in the shell if able
+          if [[ "${compiler}" == "gcc-${version}" ]]; then
+            brew install gcc@${version}
+            printf "%s\n" "CC=${version}" >> $GITHUB_ENV
+            printf "%s\n" "CXX=g++-${version}" >> $GITHUB_ENV
+          else
+            brew install llvm || true ; # can fall back on xcode-cli
+          fi
+
+      - name: Install dependencies
+        if: ${{ !cancelled() && startsWith(matrix.os, 'ubuntu-') }}
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ${{ matrix.compiler }} openssl libssl-dev libtool libengine-pkcs11-openssl
+          # libnss3 libnss3-tools libnss3-dev libtool clang autotools-dev automake make autoconf openssh-client pkg-config
+          sudo -k
+
+      - name: Check all the versions
+        shell: bash
+        run: |
+          apt-cache policy libssl-dev 2>/dev/null || true ;
+          brew environment --plain 2>/dev/null || true ;
+          ${{ matrix.compiler }} --version
+          brew info openssl 2>/dev/null || true ;
+          openssl version -a
+          ls -1 ${HOMEBREW_PREFIX}/lib/pkcs11 2>/dev/null || ls -1 /usr/lib/pkcs11 2>/dev/null || :
+        if: ${{ !cancelled() }}
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Build
+        shell: bash
+        run: |
+          autoreconf --install --force --verbose -I m4
+          if [[ "${{ matrix.os }}" == "macos-latest" || "${{ matrix.os }}" == "macos-13" || "${{ matrix.os }}" == "macos-14*" ]]; then
+            BREW_OPENSSL_PATH=$(find ${HOMEBREW_CELLAR:-/usr/local/Cellar}/ -iname "openssl*" -type d -depth 1 | sort -Vd | head -n 1)
+            ./configure --with-openssl=${BREW_OPENSSL_PATH:-/usr/local/Cellar/openssl}/*
+          else
+            ./configure
+          fi
+          make V=1
+        if: ${{ !cancelled() }}
+
+      - name: Run tests
+        shell: bash
+        env:
+          NSS_LIB_PARAMS: "configdir='$PWD' certPrefix='' keyPrefix='' secmod='secmod.db'"
+        run: make test
+
+      - name: Clean up
+        shell: bash
+        if: ${{ !cancelled() }}
+        run: make test-clean

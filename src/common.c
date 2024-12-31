@@ -105,6 +105,7 @@ CK_RV pkcs11_initialize_nss(CK_FUNCTION_LIST_PTR funcs, const char *path)
     CK_RV rc = CKR_HOST_MEMORY;
 
     if(funcs) {
+        /* load C_Initialize */
         rc = funcs->C_Initialize(NULL);
     }
     

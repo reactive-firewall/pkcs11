@@ -11,7 +11,7 @@ jobs:
     branches:
       only:
         - master
-        - Circle-CI-Support
+        - CI-CD-refactor-2024
     steps:
       - run:
           name: "clean apt"
